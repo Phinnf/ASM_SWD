@@ -26,7 +26,6 @@ $username = $_SESSION['username'];
     .menu-bar a {
       float: left;
       color: white;
-      
       padding: 14px 20px;
       text-decoration: none;
     }
