@@ -102,6 +102,35 @@ if (isset($_POST['remove_student_id']) && isset($_POST['remove_course_id'])) {
     $enroll_msg = 'Student removed from course.';
 }
 
+// PHP: Handle material edit
+if (isset($_POST['edit_material_id'])) {
+    $edit_material_id = (int) $_POST['edit_material_id'];
+    $edit_title = pg_escape_string($conn, trim($_POST['edit_material_title']));
+    $edit_file_uploaded = isset($_FILES['edit_material_file']) && $_FILES['edit_material_file']['error'] === UPLOAD_ERR_OK;
+    $update_query = "UPDATE materials SET title = '$edit_title' WHERE id = $edit_material_id";
+    $file_msg = '';
+    if ($edit_file_uploaded) {
+        $file_tmp = $_FILES['edit_material_file']['tmp_name'];
+        $file_name = time() . '_' . basename($_FILES['edit_material_file']['name']);
+        $file_path = 'uploads/' . $file_name;
+        if (move_uploaded_file($file_tmp, $file_path)) {
+            // Remove old file
+            $old = pg_query($conn, "SELECT file_path FROM materials WHERE id = $edit_material_id");
+            if ($old && pg_num_rows($old) === 1) {
+                $old_row = pg_fetch_assoc($old);
+                $old_file = 'uploads/' . $old_row['file_path'];
+                if (file_exists($old_file))
+                    unlink($old_file);
+            }
+            $update_query = "UPDATE materials SET title = '$edit_title', file_path = '$file_name' WHERE id = $edit_material_id";
+        } else {
+            $file_msg = 'File upload failed.';
+        }
+    }
+    $res = pg_query($conn, $update_query);
+    $material_msg = ($res ? 'Material updated.' : 'Error updating material.') . ($file_msg ? ' ' . $file_msg : '');
+}
+
 // Get instructor's courses
 $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id ORDER BY created_at DESC");
 ?>
@@ -111,20 +140,75 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
 <head>
     <meta charset="UTF-8" />
     <title>Instructor Dashboard</title>
-    <link rel="stylesheet" href="style.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             margin: 0;
-            background: #f4f8f7;
+            background: #f4f8fb;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        .menu-bar {
+            background: linear-gradient(90deg, #00b09b 0%, #96c93d 100%);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+
+        .menu-bar a,
+        .menu-bar .dropbtn {
+            color: white;
+            padding: 0 18px;
+            text-decoration: none;
+            font-size: 17px;
+            line-height: 60px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .menu-bar a:hover,
+        .menu-bar .dropbtn:hover {
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 6px;
+        }
+
+        .menu-bar .logout {
+            margin-left: auto;
+            background: linear-gradient(90deg, #00b09b 0%, #96c93d 100%);
+            color: #fff !important;
+            border-radius: 8px;
+            font-weight: 700;
+            padding: 0 22px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px #00b09b22;
+            border: none;
+            transition: background 0.2s;
+        }
+
+        .menu-bar .logout:hover {
+            background: linear-gradient(90deg, #96c93d 0%, #00b09b 100%);
+            color: #fff;
         }
 
         .section-card {
             background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 4px 24px #00b09b22;
-            padding: 2.5rem 2rem 2rem 2rem;
-            margin: 2rem auto;
-            max-width: 1100px;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0, 176, 155, 0.10);
+            padding: 2.5rem 2.5rem 2rem 2.5rem;
+            margin: 2.5rem auto;
+            max-width: 1200px;
         }
 
         .section-header {
@@ -139,6 +223,10 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
             font-size: 2rem;
             font-weight: 700;
             color: #00b09b;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .action-bar .btn-gradient {
@@ -158,6 +246,10 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
             gap: 0.5rem;
         }
 
+        .action-bar .btn-gradient i {
+            margin-right: 0.5rem;
+        }
+
         .action-bar .btn-gradient:hover {
             background: linear-gradient(135deg, #96c93d, #00b09b);
         }
@@ -167,6 +259,9 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
             border-collapse: collapse;
             background: #fff;
             margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         .styled-table th,
@@ -174,12 +269,14 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
             border: 1px solid #e0e0e0;
             padding: 12px 14px;
             text-align: left;
+            vertical-align: middle;
         }
 
         .styled-table th {
             background: #f4f4f4;
             color: #00b09b;
             font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         .styled-table tr:nth-child(even) {
@@ -194,21 +291,39 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
             background: linear-gradient(135deg, #00b09b, #96c93d);
             color: #fff;
             border: none;
-            border-radius: 6px;
-            padding: 0.3rem 0.8rem;
+            border-radius: 8px;
+            padding: 0.5rem 1.1rem;
             margin-right: 0.5rem;
             font-size: 1rem;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, box-shadow 0.2s;
             display: inline-flex;
             align-items: center;
+            gap: 0.3rem;
+            font-weight: 600;
+        }
+
+        .action-icons button.edit-material-btn {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+        }
+
+        .action-icons button.edit-material-btn:hover {
+            background: linear-gradient(135deg, #96c93d, #00b09b);
+        }
+
+        .action-icons button.remove-btn {
+            background: linear-gradient(135deg, #e74c3c, #ff5e62);
+        }
+
+        .action-icons button.remove-btn:hover {
+            background: linear-gradient(135deg, #ff5e62, #e74c3c);
         }
 
         .action-icons button:last-child {
             margin-right: 0;
         }
 
-        .action-icons button:hover {
+        .action-icons button:not(.remove-btn):hover {
             background: linear-gradient(135deg, #96c93d, #00b09b);
         }
 
@@ -232,37 +347,99 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
 
         .modal-content {
             background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 4px 24px #00b09b22;
-            padding: 2rem 2.5rem;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0, 176, 155, 0.13);
+            padding: 2.5rem 2.5rem 2rem 2.5rem;
             min-width: 340px;
             max-width: 95vw;
+            font-family: 'Roboto', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
         }
 
         .modal-content h3 {
             margin-top: 0;
             color: #00b09b;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.2rem;
         }
 
         .modal-content label {
             display: block;
             margin-top: 1rem;
             font-weight: 500;
+            color: #222;
+            margin-bottom: 0.3rem;
         }
 
         .modal-content input,
-        .modal-content textarea {
+        .modal-content textarea,
+        .modal-content select {
             width: 100%;
-            padding: 0.5rem;
+            padding: 0.7rem 1rem;
             margin-top: 0.3rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 1rem;
+            background: #f8fafc;
+            margin-bottom: 0.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .modal-content input:focus,
+        .modal-content textarea:focus,
+        .modal-content select:focus {
+            border-color: #00b09b;
+            outline: none;
+            box-shadow: 0 0 0 2px #00b09b22;
         }
 
         .modal-content .btn-gradient {
             margin-top: 1.2rem;
             width: 100%;
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            font-size: 1.08rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #00b09b22;
+            transition: background 0.2s, box-shadow 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-content .btn-gradient:hover {
+            background: linear-gradient(135deg, #96c93d, #00b09b);
+        }
+
+        .modal-content .btn-cancel {
+            background: #fff;
+            color: #00b09b;
+            border: 2px solid #00b09b;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            font-size: 1.08rem;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+        }
+
+        .modal-content .btn-cancel:hover {
+            background: #f4f8fb;
+            color: #089e8a;
+            border: 2px solid #089e8a;
+        }
+
+        .no-data {
+            color: #888;
+            font-style: italic;
+            margin: 0.5rem 0 1rem 0;
         }
 
         @media (max-width: 900px) {
@@ -282,20 +459,42 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
         }
+
+        // Modern Confirm Modal Logic
+        let confirmCallback = null;
+        function showConfirmModal(message, onConfirm) {
+            document.getElementById('confirmModalMessage').textContent = message;
+            document.getElementById('confirmModal').classList.add('active');
+            confirmCallback = onConfirm;
+        }
+        function hideConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+            confirmCallback = null;
+        }
+        function confirmModalYes() {
+            if (confirmCallback) confirmCallback();
+            hideConfirmModal();
+        }
     </script>
 </head>
 
 <body>
+    <div class="menu-bar">
+        <a href="main.php"><i class="fa fa-home"></i> Home</a>
+        <a href="logout.php" class="logout"><i class="fa fa-sign-out-alt"></i> Logout</a>
+    </div>
     <div class="section-card">
         <div class="section-header">
-            <h2>Manage Courses</h2>
+            <h2><i class="fa fa-chalkboard-teacher"></i> Manage Courses</h2>
             <div class="action-bar">
-                <button class="btn-gradient" onclick="openModal('addCourseModal')">&#43; Add Course</button>
-                <button class="btn-gradient" onclick="openModal('uploadMaterialModal')">&#128190; Upload
-                    Material</button>
-                <button class="btn-gradient" onclick="openModal('enrollStudentModal')">&#128101; Enroll Student</button>
-                <a href="main.php" class="btn-gradient" style="text-decoration:none;display:inline-block;">&larr; Return
-                    to Menu</a>
+                <button class="btn-gradient" onclick="openModal('addCourseModal')"><i class="fa fa-plus"></i> Add
+                    Course</button>
+                <button class="btn-gradient" onclick="openModal('uploadMaterialModal')"><i class="fa fa-upload"></i>
+                    Upload Material</button>
+                <button class="btn-gradient" onclick="openModal('enrollStudentModal')"><i class="fa fa-user-plus"></i>
+                    Enroll Student</button>
+                <a href="main.php" class="btn-gradient" style="text-decoration:none;display:inline-block;"><i
+                        class="fa fa-arrow-left"></i> Return to Menu</a>
             </div>
         </div>
         <table class="styled-table">
@@ -325,7 +524,7 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
                             . '\'' . addslashes(htmlspecialchars($c['title'])) . '\', '
                             . '\'' . addslashes(htmlspecialchars($c['description'])) . '\''
                             . ')">&#9998; Edit</button>';
-                        echo '<form method="post" style="display:inline;" onsubmit="return confirm(\'Are you sure you want to delete this course and all its materials?\');"><input type="hidden" name="delete_course_id" value="' . $c['id'] . '"><button type="submit">&#128465; Delete</button></form>';
+                        echo '<form method="post" style="display:inline;" class="confirm-delete-course"><input type="hidden" name="delete_course_id" value="' . $c['id'] . '"><button type="submit" class="remove-btn"><i class="fa fa-trash"></i> Delete</button></form>';
                         echo '</td>';
                         echo '</tr>';
                     }
@@ -348,8 +547,7 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
                 <label>Description</label>
                 <textarea name="description" required></textarea>
                 <button class="btn-gradient" type="submit" name="create_course">Add Course</button>
-                <button type="button" class="btn-gradient" style="background:#eee;color:#00b09b;font-weight:bold;"
-                    onclick="closeModal('addCourseModal')">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('addCourseModal')">Cancel</button>
             </form>
         </div>
     </div>
@@ -366,8 +564,7 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
                 <label>Description</label>
                 <textarea name="edit_description" id="edit_description" required></textarea>
                 <button class="btn-gradient" type="submit" name="update_course">Update Course</button>
-                <button type="button" class="btn-gradient" style="background:#eee;color:#00b09b;font-weight:bold;"
-                    onclick="closeModal('editCourseModal')">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('editCourseModal')">Cancel</button>
             </form>
         </div>
     </div>
@@ -393,8 +590,7 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
                 <label>File</label>
                 <input type="file" name="material_file" required />
                 <button class="btn-gradient" type="submit" name="upload_material">Upload</button>
-                <button type="button" class="btn-gradient" style="background:#eee;color:#00b09b;font-weight:bold;"
-                    onclick="closeModal('uploadMaterialModal')">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('uploadMaterialModal')">Cancel</button>
             </form>
         </div>
     </div>
@@ -418,8 +614,22 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
                 <label>Student Email</label>
                 <input type="email" name="student_email" required />
                 <button class="btn-gradient" type="submit" name="enroll_student">Enroll</button>
-                <button type="button" class="btn-gradient" style="background:#f4f8f7;color:#00b09b;font-weight:bold;"
-                    onclick="closeModal('enrollStudentModal')">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('enrollStudentModal')">Cancel</button>
+            </form>
+        </div>
+    </div>
+    <!-- Edit Material Modal (single, populated by JS) -->
+    <div class="modal" id="editMaterialModal">
+        <div class="modal-content">
+            <h3>Edit Material</h3>
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" name="edit_material_id" id="edit_material_id" />
+                <label>Title</label>
+                <input type="text" name="edit_material_title" id="edit_material_title" required />
+                <label>Replace File (optional)</label>
+                <input type="file" name="edit_material_file" />
+                <button class="btn-gradient" type="submit">Update Material</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('editMaterialModal')">Cancel</button>
             </form>
         </div>
     </div>
@@ -431,6 +641,50 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
             document.getElementById('edit_description').value = desc;
             openModal('editCourseModal');
         }
+
+        // Attach modern confirm modal to delete/remove actions
+        document.addEventListener('DOMContentLoaded', function () {
+            // Delete course
+            document.querySelectorAll('.confirm-delete-course').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    showConfirmModal('Are you sure you want to delete this course and all its materials?', function () {
+                        form.submit();
+                    });
+                });
+            });
+            // Delete material
+            document.querySelectorAll('.confirm-delete-material').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var form = btn.closest('form');
+                    showConfirmModal('Are you sure you want to delete this material?', function () {
+                        form.submit();
+                    });
+                });
+            });
+            // Remove student
+            document.querySelectorAll('.confirm-remove-student').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var form = btn.closest('form');
+                    showConfirmModal('Are you sure you want to remove this student from the course?', function () {
+                        form.submit();
+                    });
+                });
+            });
+        });
+
+        // JS: Attach edit-material-btn click to open modal and populate fields
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.edit-material-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.getElementById('edit_material_id').value = btn.getAttribute('data-id');
+                    document.getElementById('edit_material_title').value = btn.getAttribute('data-title');
+                    openModal('editMaterialModal');
+                });
+            });
+        });
     </script>
     <!-- Course Details Section: Enrolled Students and Materials -->
     <div class="section-card">
@@ -454,10 +708,13 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
                         echo '<td><a href="uploads/' . htmlspecialchars($m['file_path']) . '" target="_blank">Download</a></td>';
                         echo '<td>' . htmlspecialchars($m['uploaded_at']) . '</td>';
                         echo '<td>';
-                        echo '<form method="post" style="display:inline;" onsubmit="return confirm(\'Are you sure you want to delete this material?\');">';
+                        echo '<div class="action-icons" style="display:inline-flex;align-items:center;">';
+                        echo '<button type="button" class="btn-gradient edit-material-btn" data-id="' . $m['id'] . '" data-title="' . htmlspecialchars($m['title']) . '"><i class="fa fa-pen"></i> Edit</button> ';
+                        echo '<form method="post" style="display:inline;" class="confirm-delete-material">';
                         echo '<input type="hidden" name="delete_material_id" value="' . $m['id'] . '">';
-                        echo '<button type="submit" class="btn-gradient" style="background:#e74c3c; color:#fff;">Remove</button>';
+                        echo '<button type="submit" class="remove-btn"><i class="fa fa-trash"></i> Remove</button>';
                         echo '</form>';
+                        echo '</div>';
                         echo '</td>';
                         echo '</tr>';
                     }
@@ -478,10 +735,10 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
                         echo '<td>' . htmlspecialchars($s['username']) . '</td>';
                         echo '<td>' . htmlspecialchars($s['email']) . '</td>';
                         echo '<td>';
-                        echo '<form method="post" style="display:inline;" onsubmit="return confirm(\'Are you sure you want to remove this student from the course?\');">';
+                        echo '<form method="post" style="display:inline;" class="confirm-remove-student-form">';
                         echo '<input type="hidden" name="remove_student_id" value="' . $s['id'] . '">';
                         echo '<input type="hidden" name="remove_course_id" value="' . $c['id'] . '">';
-                        echo '<button type="submit" class="btn-gradient" style="background:#e74c3c; color:#fff;">Remove</button>';
+                        echo '<button type="submit" class="remove-btn action-btn confirm-remove-student"><i class="fa fa-user-minus"></i> Remove</button>';
                         echo '</form>';
                         echo '</td>';
                         echo '</tr>';
@@ -497,6 +754,19 @@ $courses = pg_query($conn, "SELECT * FROM courses WHERE instructor_id = $user_id
             echo '<p>No courses found.</p>';
         }
         ?>
+    </div>
+    <!-- Modern Confirm Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content" style="max-width:400px;text-align:center;">
+            <h3 style="margin-bottom:1.2rem;">Please Confirm</h3>
+            <div id="confirmModalMessage" style="margin-bottom:1.5rem;font-size:1.1rem;color:#333;"></div>
+            <div style="display:flex;gap:16px;justify-content:center;">
+                <button class="btn-gradient" style="background:#e74c3c; color:#fff;min-width:100px;"
+                    onclick="confirmModalYes()">Confirm</button>
+                <button class="btn-gradient" style="background:#eee;color:#00b09b;font-weight:bold;min-width:100px;"
+                    onclick="hideConfirmModal()">Cancel</button>
+            </div>
+        </div>
     </div>
 </body>
 
