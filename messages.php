@@ -1,140 +1,321 @@
 <?php
 session_start();
 include 'db_connect.php';
-
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit;
 }
 $user_id = $_SESSION['user_id'];
-$role = $_SESSION['role'];
+$username = $_SESSION['username'];
 
-// Handle sending a message
-$msg = '';
-if (isset($_POST['send_message'])) {
-    $to_id = (int)$_POST['recipient_id'];
-    $text = pg_escape_string($conn, trim($_POST['message_text']));
-    if ($to_id && $text) {
-        $query = "INSERT INTO messages (sender_id, receiver_id, course_id, message_text, sent_at) VALUES ($user_id, $to_id, NULL, '$text', NOW())";
-        $res = pg_query($conn, $query);
-        $msg = $res ? 'Message sent!' : 'Error sending message.';
-    } else {
-        $msg = 'Please select a recipient and enter a message.';
+// Handle new message submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message_text'])) {
+    $msg = trim($_POST['message_text']);
+    if ($msg !== '') {
+        $msg_esc = pg_escape_string($conn, $msg);
+        $query = "INSERT INTO messages (sender_id, message_text, sent_at) VALUES ($user_id, '$msg_esc', NOW())";
+        pg_query($conn, $query);
+        header('Location: messages.php'); // Prevent resubmission
+        exit;
     }
 }
-
-// Get all users except self (for recipient dropdown)
-$users = pg_query($conn, "SELECT id, username, email, role FROM users WHERE id != $user_id ORDER BY username");
-
-// Inbox: messages received
-$inbox = pg_query($conn, "SELECT m.*, u.username AS sender_name FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.receiver_id = $user_id ORDER BY m.sent_at DESC");
-// Outbox: messages sent
-$outbox = pg_query($conn, "SELECT m.*, u.username AS receiver_name FROM messages m JOIN users u ON m.receiver_id = u.id WHERE m.sender_id = $user_id ORDER BY m.sent_at DESC");
+// Fetch all messages (global chat)
+$msg_query = "SELECT m.*, u.username FROM messages m JOIN users u ON m.sender_id = u.id ORDER BY m.sent_at ASC, m.id ASC";
+$msg_res = pg_query($conn, $msg_query);
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<title>Messages</title>
-<link rel="stylesheet" href="style.css" />
-<style>
-body { margin: 0; }
-.left-menu-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 180px;
-    height: 100%;
-    background: linear-gradient(135deg, #00b09b, #96c93d);
-    padding-top: 40px;
-    box-shadow: 2px 0 8px #0001;
-    display: flex;
-    flex-direction: column;
-}
-.left-menu-bar a {
-    color: white;
-    padding: 16px 24px;
-    text-decoration: none;
-    font-size: 16px;
-    transition: background 0.2s;
-}
-.left-menu-bar a:hover, .left-menu-bar a.active {
-    background-color: #00b09b
-}
-.container {
-    max-width: 900px;
-    margin: 2rem auto;
-    margin-left: 200px; /* space for sidebar */
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px #0001;
-    padding: 2rem;
-}
-h2 { color: #00b09b; }
-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-th, td { border: 1px solid #eee; padding: 8px; text-align: left; }
-th { background: #f4f4f4; }
-.section { margin-bottom: 2rem; }
-</style>
+    <meta charset="UTF-8" />
+    <title>Global Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: #f4f8fb;
+            margin: 0;
+            padding: 0;
+        }
+
+        .menu-bar {
+            background: linear-gradient(90deg, #00b09b 0%, #96c93d 100%);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+
+        .menu-bar a {
+            color: white;
+            padding: 0 18px;
+            text-decoration: none;
+            font-size: 17px;
+            line-height: 60px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .menu-bar a:hover {
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 6px;
+        }
+
+        .menu-bar .logout {
+            margin-left: auto;
+            background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+            border-radius: 6px;
+            font-weight: 700;
+            transition: background 0.2s;
+        }
+
+        .chat-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            background: #f4f8fb;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: #fff;
+            padding: 2rem 1rem;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .sidebar h2 {
+            color: #fff;
+            margin-bottom: 2rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .sidebar .user-list {
+            margin-top: 1rem;
+            font-size: 1rem;
+            color: #eafaf1;
+            opacity: 0.7;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 18px 0 0 0;
+            margin: 2.5rem 2.5rem 2.5rem 0;
+            box-shadow: 0 4px 24px rgba(0, 176, 155, 0.10);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(90deg, #00b09b 0%, #96c93d 100%);
+            color: #fff;
+            padding: 1.2rem 2rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-bottom: 1.5px solid #e0e0e0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.2rem;
+            gap: 1rem;
+        }
+
+        .message .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #00b09b11;
+            padding: 0.8rem 1.2rem;
+            min-width: 120px;
+            max-width: 600px;
+            word-break: break-word;
+        }
+
+        .message-header {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #00b09b;
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .message-time {
+            font-size: 0.92rem;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .chat-form {
+            padding: 1.2rem 2rem;
+            background: #f4f8fb;
+            border-top: 1.5px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .chat-form textarea {
+            flex: 1;
+            resize: none;
+            border-radius: 8px;
+            border: 1.5px solid #e0e0e0;
+            padding: 0.8rem 1rem;
+            font-size: 1.08rem;
+            font-family: 'Roboto', Arial, sans-serif;
+            background: #f8fafc;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .chat-form textarea:focus {
+            border-color: #00b09b;
+            outline: none;
+            box-shadow: 0 0 0 2px #00b09b22;
+        }
+
+        .chat-form button {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            font-size: 1.08rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #00b09b22;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+
+        .chat-form button:hover {
+            background: linear-gradient(135deg, #96c93d, #00b09b);
+        }
+
+        @media (max-width: 900px) {
+            .chat-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-height: 0;
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 1rem;
+            }
+
+            .chat-main {
+                margin: 0;
+                border-radius: 0;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .chat-main {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .chat-header,
+            .chat-form {
+                padding: 1rem;
+            }
+
+            .chat-messages {
+                padding: 1rem;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="left-menu-bar">
-    <a href="main.php">Home</a>
-    <a href="my_courses.php">My Courses</a>
-    <a href="messages.php" class="active">Messages</a>
-    <a href="logout.php" style="margin-top:auto;">Logout</a>
-</div>
-<div class="container">
-    <h2>Messages</h2>
-    <?php if ($msg) echo '<div class="alert">' . htmlspecialchars($msg) . '</div>'; ?>
-    <div class="section">
-        <h3>Send a Message</h3>
-        <form method="post">
-            <label>To:</label>
-            <select name="recipient_id" class="form-control" required>
-                <option value="">Select recipient</option>
+    <div class="menu-bar">
+        <a href="main.php"><i class="fa fa-home"></i> Home</a>
+        <a href="logout.php" class="logout"><i class="fa fa-sign-out-alt"></i> Logout</a>
+    </div>
+    <div class="chat-container">
+        <div class="sidebar"
+            style="background:linear-gradient(135deg,#00b09b,#96c93d);display:flex;align-items:center;justify-content:center;">
+            <div
+                style="background: #fff; color: #00b09b; border-radius: 14px; box-shadow: 0 2px 12px #00b09b22; padding: 1.5rem 1.2rem; max-width: 180px; text-align: center; font-size: 1.08rem; font-weight: 500;">
+                <i class="fa fa-lightbulb" style="font-size:1.5rem;color:#96c93d;margin-bottom:0.5rem;"></i><br>
+                <span style="font-weight:700;">Note:</span><br>
+                This is a global chat. Everyone can see your messages. Be respectful and have fun!
+            </div>
+        </div>
+        <div class="chat-main">
+            <div class="chat-header"><i class="fa fa-comments"></i> Global Chat</div>
+            <div class="chat-messages" id="chat-messages">
                 <?php
-                if ($users) {
-                    while ($u = pg_fetch_assoc($users)) {
-                        echo '<option value="' . $u['id'] . '">' . htmlspecialchars($u['username']) . ' (' . htmlspecialchars($u['role']) . ')</option>';
+                if ($msg_res && pg_num_rows($msg_res) > 0) {
+                    while ($row = pg_fetch_assoc($msg_res)) {
+                        $is_me = $row['sender_id'] == $user_id;
+                        $initial = strtoupper(substr($row['username'], 0, 1));
+                        $time = date('M d, H:i', strtotime($row['sent_at']));
+                        echo '<div class="message" style="' . ($is_me ? 'flex-direction:row-reverse;' : '') . '">';
+                        echo '<div class="avatar" title="' . htmlspecialchars($row['username']) . '">' . htmlspecialchars($initial) . '</div>';
+                        echo '<div class="message-content">';
+                        echo '<div class="message-header">' . htmlspecialchars($row['username']);
+                        echo ' <span class="message-time">' . htmlspecialchars($time) . '</span>';
+                        echo '</div>';
+                        echo '<div>' . nl2br(htmlspecialchars($row['message_text'])) . '</div>';
+                        echo '</div>';
+                        echo '</div>';
                     }
+                } else {
+                    echo '<div style="color:#888;text-align:center;">No messages yet. Start the conversation!</div>';
                 }
                 ?>
-            </select>
-            <label>Message:</label>
-            <textarea name="message_text" class="form-control" required></textarea>
-            <button class="btn btn-primary" type="submit" name="send_message" style="margin-top: 10px;">Send</button>
-        </form>
+            </div>
+            <form class="chat-form" method="post" autocomplete="off">
+                <textarea name="message_text" rows="2" placeholder="Type your message..." required
+                    maxlength="1000"></textarea>
+                <button type="submit"><i class="fa fa-paper-plane"></i> Send</button>
+            </form>
+        </div>
     </div>
-    <div class="section">
-        <h3>Inbox</h3>
-        <?php
-        if ($inbox && pg_num_rows($inbox) > 0) {
-            echo '<table><tr><th>From</th><th>Message</th><th>Date</th></tr>';
-            while ($m = pg_fetch_assoc($inbox)) {
-                echo '<tr><td>' . htmlspecialchars($m['sender_name']) . '</td><td>' . nl2br(htmlspecialchars($m['message_text'])) . '</td><td>' . htmlspecialchars($m['sent_at']) . '</td></tr>';
-            }
-            echo '</table>';
-        } else {
-            echo '<p>No messages received.</p>';
+    <script>
+        // Auto-scroll to latest message
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-        ?>
-    </div>
-    <div class="section">
-        <h3>Outbox</h3>
-        <?php
-        if ($outbox && pg_num_rows($outbox) > 0) {
-            echo '<table><tr><th>To</th><th>Message</th><th>Date</th></tr>';
-            while ($m = pg_fetch_assoc($outbox)) {
-                echo '<tr><td>' . htmlspecialchars($m['receiver_name']) . '</td><td>' . nl2br(htmlspecialchars($m['message_text'])) . '</td><td>' . htmlspecialchars($m['sent_at']) . '</td></tr>';
-            }
-            echo '</table>';
-        } else {
-            echo '<p>No messages sent.</p>';
-        }
-        ?>
-    </div>
-    <a href="main.php" style="display:block;margin:2rem auto;text-align:center;color:#00b09b;font-weight:bold;">&larr; Return to Menu</a>
-</div>
+    </script>
 </body>
+
 </html>

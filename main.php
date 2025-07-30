@@ -226,6 +226,7 @@ $username = $_SESSION['username'];
       </div>
     </div>
     <a href="messages.php"><i class="fa fa-envelope"></i> Messages</a>
+    <a href="profile.php"><i class="fa fa-user"></i> Profile</a>
     <a href="analytics.php"><i class="fa fa-chart-bar"></i> Analytics</a>
     <a href="logout.php" class="logout"><i class="fa fa-sign-out-alt"></i> Logout</a>
   </div>
@@ -267,6 +268,7 @@ $username = $_SESSION['username'];
       <div class="card-title">Quizzes</div>
       <div class="card-desc">Take quizzes and check your progress.</div>
     </a>
+
     <a class="card" href="assignments.php">
       <span class="icon"><i class="fa fa-file-alt"></i></span>
       <div class="card-title">Assignments</div>
@@ -281,6 +283,11 @@ $username = $_SESSION['username'];
       <span class="icon"><i class="fa fa-chart-bar"></i></span>
       <div class="card-title">Analytics</div>
       <div class="card-desc">Track your learning analytics and stats.</div>
+    </a>
+    <a class="card" href="profile.php">
+      <span class="icon"><i class="fa fa-user"></i></span>
+      <div class="card-title">My Profile</div>
+      <div class="card-desc">Manage your account settings and view activity.</div>
     </a>
   </div>
 
