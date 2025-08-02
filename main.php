@@ -4,7 +4,21 @@ if (!isset($_SESSION['user_id'])) {
   header("Location: index.php");
   exit;
 }
+
 $username = $_SESSION['username'];
+$role = $_SESSION['role'];
+
+// Redirect users to their appropriate dashboards
+if ($role === 'admin') {
+    header('Location: admin_dashboard.php');
+    exit;
+} elseif ($role === 'instructor') {
+    header('Location: instructor_dashboard.php');
+    exit;
+} elseif ($role === 'student') {
+    header('Location: student_dashboard.php');
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -12,7 +26,7 @@ $username = $_SESSION['username'];
 
 <head>
   <meta charset="UTF-8" />
-  <title>Main Page - LMS</title>
+  <title>Cesus - Learning Management System</title>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -174,6 +188,19 @@ $username = $_SESSION['username'];
       opacity: 0.85;
     }
 
+    .role-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #00b09b;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
     @media (max-width: 1100px) {
       .dashboard {
         max-width: 98vw;
@@ -237,6 +264,30 @@ $username = $_SESSION['username'];
   </div>
 
   <div class="dashboard">
+    <!-- Role-specific Dashboard Access -->
+    <?php if ($role === 'admin'): ?>
+    <a class="card" href="admin_dashboard.php">
+      <div class="role-badge">Admin</div>
+      <span class="icon"><i class="fa fa-user-shield"></i></span>
+      <div class="card-title">Admin Dashboard</div>
+      <div class="card-desc">Manage users, courses, and system settings.</div>
+    </a>
+    <?php elseif ($role === 'instructor'): ?>
+    <a class="card" href="instructor_dashboard.php">
+      <div class="role-badge">Instructor</div>
+      <span class="icon"><i class="fa fa-chalkboard-teacher"></i></span>
+      <div class="card-title">Instructor Dashboard</div>
+      <div class="card-desc">Manage your courses and track student progress.</div>
+    </a>
+    <?php elseif ($role === 'student'): ?>
+    <a class="card" href="student_dashboard.php">
+      <div class="role-badge">Student</div>
+      <span class="icon"><i class="fa fa-user-graduate"></i></span>
+      <div class="card-title">Student Dashboard</div>
+      <div class="card-desc">View your courses, assignments, and progress.</div>
+    </a>
+    <?php endif; ?>
+
     <!-- Pomodoro Timer Card -->
     <div class="card" style="position: relative; overflow: visible; min-width: 260px;">
       <span class="icon"><i class="fa fa-clock"></i></span>

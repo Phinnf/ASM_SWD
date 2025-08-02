@@ -808,6 +808,11 @@ $courses = pg_query($conn, $courses_query);
                                     <button class="btn-secondary" onclick="viewSubmission(<?php echo $submission['id']; ?>)">
                                         <i class="fa fa-eye"></i> View
                                     </button>
+                                    <?php if ($role === 'student' && $submission['grade'] === null): ?>
+                                        <a href="edit_submission.php?id=<?php echo $submission['id']; ?>" class="btn-gradient" style="text-decoration: none; margin-left: 0.5rem;">
+                                            <i class="fa fa-edit"></i> Edit
+                                        </a>
+                                    <?php endif; ?>
                                     <?php if ($role === 'instructor' && $submission['grade'] === null): ?>
                                         <button class="btn-gradient"
                                             onclick="openGradeModal(<?php echo $submission['id']; ?>, <?php echo $submission['max_points']; ?>)">

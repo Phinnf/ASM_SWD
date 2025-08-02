@@ -343,6 +343,28 @@ if (isset($_POST['grade_submission']) && $role === 'instructor') {
                 padding: 1.5rem;
             }
         }
+
+        .link-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .link-status.valid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .link-status.invalid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .link-status.checking {
+            background: #fff3cd;
+            color: #856404;
+        }
     </style>
 </head>
 
@@ -365,9 +387,17 @@ if (isset($_POST['grade_submission']) && $role === 'instructor') {
         <div class="section-card">
             <div class="section-header">
                 <h2><i class="fa fa-file-alt"></i> Assignment Submission</h2>
-                <a href="assignments.php" class="btn-secondary">
-                    <i class="fa fa-arrow-left"></i> Back to Assignments
-                </a>
+                <div style="display: flex; gap: 0.5rem;">
+                    <?php if ($role === 'student' && $submission['grade'] === null): ?>
+                        <a href="edit_submission.php?id=<?php echo $submission_id; ?>" class="btn-gradient"
+                            style="text-decoration: none;">
+                            <i class="fa fa-edit"></i> Edit Submission
+                        </a>
+                    <?php endif; ?>
+                    <a href="assignments.php" class="btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Back to Assignments
+                    </a>
+                </div>
             </div>
 
             <div class="submission-info">
@@ -378,7 +408,8 @@ if (isset($_POST['grade_submission']) && $role === 'instructor') {
                 <div class="info-card">
                     <div class="info-label">Course</div>
                     <div class="info-value"><?php echo htmlspecialchars($submission['course_code']); ?> -
-                        <?php echo htmlspecialchars($submission['course_title']); ?></div>
+                        <?php echo htmlspecialchars($submission['course_title']); ?>
+                    </div>
                 </div>
                 <div class="info-card">
                     <div class="info-label">Student</div>
@@ -412,33 +443,74 @@ if (isset($_POST['grade_submission']) && $role === 'instructor') {
             <div class="section-card" style="margin-bottom: 2rem;">
                 <h3 style="color: #00b09b; margin-bottom: 1rem;">Student Submission</h3>
                 <div class="submission-content">
-                    <?php 
+                    <?php
                     $submission_text = $submission['submission_text'];
                     $text_parts = explode('--- UPLOADED FILES ---', $submission_text);
                     $main_text = trim($text_parts[0]);
+
+                    // Extract links from submission text
+                    $links = [];
+                    preg_match_all('/https?:\/\/[^\s<>"]+/', $main_text, $matches);
+                    if (!empty($matches[0])) {
+                        $links = $matches[0];
+                    }
                     ?>
                     <div class="submission-text"><?php echo htmlspecialchars($main_text); ?></div>
-                    
+
+                    <?php if (!empty($links) && $role === 'instructor'): ?>
+                        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0;">
+                            <h4 style="color: #00b09b; margin-bottom: 1rem;">
+                                <i class="fa fa-link"></i> Links Found in Submission
+                            </h4>
+                            <div id="links-container">
+                                <?php foreach ($links as $index => $link): ?>
+                                    <div class="link-item"
+                                        style="display: flex; align-items: center; padding: 0.8rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 0.8rem; border: 1px solid #e0e0e0;">
+                                        <div style="flex-grow: 1;">
+                                            <div style="font-weight: 600; color: #333; margin-bottom: 0.3rem;">
+                                                Link <?php echo $index + 1; ?>
+                                            </div>
+                                            <div style="color: #00b09b; word-break: break-all; font-size: 0.9rem;">
+                                                <a href="<?php echo htmlspecialchars($link); ?>" target="_blank"
+                                                    style="color: #00b09b; text-decoration: none;">
+                                                    <?php echo htmlspecialchars($link); ?>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style="margin-left: 1rem;">
+                                            <button type="button" class="btn-secondary" style="margin-right: 0.5rem;"
+                                                onclick="checkLink('<?php echo htmlspecialchars($link); ?>', <?php echo $index; ?>)">
+                                                <i class="fa fa-external-link-alt"></i> Check Link
+                                            </button>
+                                            <span id="link-status-<?php echo $index; ?>" class="link-status"></span>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <?php if (count($text_parts) > 1): ?>
                         <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0;">
                             <h4 style="color: #00b09b; margin-bottom: 1rem;">
                                 <i class="fa fa-paperclip"></i> Uploaded Files
                             </h4>
-                            <?php 
+                            <?php
                             $files_section = $text_parts[1];
                             $files = explode("\n", trim($files_section));
                             foreach ($files as $file_line):
                                 if (strpos($file_line, 'File:') === 0):
                                     $file_name = trim(substr($file_line, 5));
-                            ?>
-                                <div style="display: flex; align-items: center; padding: 0.5rem; background: #f8f9fa; border-radius: 6px; margin-bottom: 0.5rem;">
-                                    <i class="fa fa-file" style="color: #00b09b; margin-right: 0.5rem;"></i>
-                                    <span style="flex-grow: 1;"><?php echo htmlspecialchars($file_name); ?></span>
-                                    <span style="color: #666; font-size: 0.9rem;">Uploaded</span>
-                                </div>
-                            <?php 
+                                    ?>
+                                    <div
+                                        style="display: flex; align-items: center; padding: 0.5rem; background: #f8f9fa; border-radius: 6px; margin-bottom: 0.5rem;">
+                                        <i class="fa fa-file" style="color: #00b09b; margin-right: 0.5rem;"></i>
+                                        <span style="flex-grow: 1;"><?php echo htmlspecialchars($file_name); ?></span>
+                                        <span style="color: #666; font-size: 0.9rem;">Uploaded</span>
+                                    </div>
+                                    <?php
                                 endif;
-                            endforeach; 
+                            endforeach;
                             ?>
                         </div>
                     <?php endif; ?>
@@ -497,6 +569,38 @@ if (isset($_POST['grade_submission']) && $role === 'instructor') {
             <?php endif; ?>
         </div>
     </div>
+
+    <script>
+        function checkLink(url, index) {
+            const statusElement = document.getElementById(`link-status-${index}`);
+            statusElement.textContent = 'Checking...';
+            statusElement.className = 'link-status checking';
+
+            // Create a proxy endpoint to check the link
+            fetch('check_link.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(url)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        statusElement.textContent = 'Valid';
+                        statusElement.className = 'link-status valid';
+                    } else {
+                        statusElement.textContent = 'Invalid';
+                        statusElement.className = 'link-status invalid';
+                    }
+                })
+                .catch(error => {
+                    statusElement.textContent = 'Error';
+                    statusElement.className = 'link-status invalid';
+                    console.error('Error checking link:', error);
+                });
+        }
+    </script>
 </body>
 
 </html>

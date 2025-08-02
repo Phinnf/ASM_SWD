@@ -43,11 +43,19 @@ if (isset($_POST['add_question'])) {
     $option_d = pg_escape_string($conn, trim($_POST['option_d']));
     $correct_answer = pg_escape_string($conn, trim($_POST['correct_answer']));
 
-    $query = "INSERT INTO quiz_questions (quiz_id, question_text, option_a, option_b, option_c, option_d, correct_answer) 
-              VALUES ($quiz_id, '$question_text', '$option_a', '$option_b', '$option_c', '$option_d', '$correct_answer')";
-    $res = pg_query($conn, $query);
+    // Check if question already exists for this quiz
+    $check_query = "SELECT id FROM quiz_questions WHERE quiz_id = $quiz_id AND question_text = '$question_text'";
+    $check_result = pg_query($conn, $check_query);
 
-    $question_msg = $res ? 'Question added successfully!' : 'Error adding question.';
+    if (pg_num_rows($check_result) > 0) {
+        $question_msg = 'This question already exists for this quiz.';
+    } else {
+        $query = "INSERT INTO quiz_questions (quiz_id, question_text, option_a, option_b, option_c, option_d, correct_answer) 
+                  VALUES ($quiz_id, '$question_text', '$option_a', '$option_b', '$option_c', '$option_d', '$correct_answer')";
+        $res = pg_query($conn, $query);
+
+        $question_msg = $res ? 'Question added successfully!' : 'Error adding question.';
+    }
 }
 
 // Handle quiz submission
