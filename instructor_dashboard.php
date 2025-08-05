@@ -92,8 +92,16 @@ $stats = pg_fetch_assoc($stats_result);
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             font-size: 1.8rem;
             font-weight: 700;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
         }
 
         .nav-menu {
@@ -393,7 +401,10 @@ $stats = pg_fetch_assoc($stats_result);
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <div class="logo">Cesus Classroom</div>
+            <div class="logo">
+                <img src="assets/logo.png" alt="Cesus Logo">
+                Cesus Classroom
+            </div>
             <nav class="nav-menu">
                 <a href="instructor_courses.php"><i class="fas fa-book"></i> My Courses</a>
                 <a href="assignments.php"><i class="fas fa-tasks"></i> Assignments</a>
@@ -410,7 +421,59 @@ $stats = pg_fetch_assoc($stats_result);
         <!-- Welcome Section -->
         <div class="welcome-section">
             <h1 class="welcome-title">Welcome back, <?php echo htmlspecialchars($username); ?>!</h1>
-            <p class="welcome-subtitle">Manage your courses and track student progress.</p>
+            <p class="welcome-subtitle">Empowering education through innovative digital learning management.</p>
+
+            <!-- System Information -->
+            <div
+                style="margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px;">
+                <h3 style="color: #00b09b; margin-bottom: 1rem; font-size: 1.3rem;">
+                    <i class="fas fa-graduation-cap"></i> Cesus Learning Management System
+                </h3>
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div style="background: white; padding: 1rem; border-radius: 6px; border-left: 4px solid #00b09b;">
+                        <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 1rem;">
+                            <i class="fas fa-users"></i> Student Engagement
+                        </h4>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                            Track student progress, monitor participation, and provide personalized feedback to enhance
+                            learning outcomes.
+                        </p>
+                    </div>
+                    <div style="background: white; padding: 1rem; border-radius: 6px; border-left: 4px solid #96c93d;">
+                        <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 1rem;">
+                            <i class="fas fa-tasks"></i> Assignment Management
+                        </h4>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                            Create, distribute, and grade assignments efficiently with our comprehensive assessment
+                            tools.
+                        </p>
+                    </div>
+                    <div style="background: white; padding: 1rem; border-radius: 6px; border-left: 4px solid #ffc107;">
+                        <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 1rem;">
+                            <i class="fas fa-chart-line"></i> Analytics & Insights
+                        </h4>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                            Gain valuable insights into student performance and course effectiveness through detailed
+                            analytics.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Quick Tips for Instructors -->
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
+                    <h4 style="color: #00b09b; margin-bottom: 1rem; font-size: 1.1rem;">
+                        <i class="fas fa-lightbulb"></i> Teaching Tips
+                    </h4>
+                    <ul style="color: #666; line-height: 1.6; margin: 0; padding-left: 1.5rem;">
+                        <li>Use the <strong>Link Checking</strong> feature to validate external resources submitted by
+                            students</li>
+                        <li>Provide timely feedback to keep students engaged and motivated</li>
+                        <li>Create diverse assessment types to accommodate different learning styles</li>
+                        <li>Monitor student progress regularly to identify those who need additional support</li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
         <!-- Statistics -->
@@ -539,6 +602,39 @@ $stats = pg_fetch_assoc($stats_result);
                                 <a href="view_submissions.php" class="btn btn-warning">View All Pending</a>
                             </div>
                         <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- System Features -->
+                <div class="sidebar-card">
+                    <div class="section-header">
+                        <h3 class="section-title">System Features</h3>
+                    </div>
+                    <div class="sidebar-content">
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                            <h4 style="color: #00b09b; font-size: 1rem; margin-bottom: 0.5rem;">
+                                <i class="fas fa-link"></i> Link Validation
+                            </h4>
+                            <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                                Check external links submitted by students for accessibility and validity.
+                            </p>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                            <h4 style="color: #00b09b; font-size: 1rem; margin-bottom: 0.5rem;">
+                                <i class="fas fa-edit"></i> Student Editing
+                            </h4>
+                            <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                                Students can edit their submissions before grading for better learning outcomes.
+                            </p>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+                            <h4 style="color: #00b09b; font-size: 1rem; margin-bottom: 0.5rem;">
+                                <i class="fas fa-chart-bar"></i> Progress Tracking
+                            </h4>
+                            <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                                Monitor student progress and performance with detailed analytics and reports.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

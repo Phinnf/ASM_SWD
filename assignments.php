@@ -95,7 +95,7 @@ if (isset($_POST['submit_assignment'])) {
                 $final_submission_text .= "\n\n--- UPLOADED FILES ---\n";
                 foreach ($uploaded_files as $file_info) {
                     list($original_name, $stored_name) = explode('|', $file_info);
-                    $final_submission_text .= "File: $original_name\n";
+                    $final_submission_text .= "File: $original_name|$stored_name\n";
                 }
             }
 
@@ -194,6 +194,24 @@ $courses = pg_query($conn, $courses_query);
             display: flex;
             align-items: center;
             height: 60px;
+        }
+
+        .menu-bar .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-right: 2rem;
+        }
+
+        .menu-bar .logo img {
+            height: 35px;
+            width: auto;
+        }
+
+        .menu-bar .logo span {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
         }
 
         .menu-bar a {
@@ -664,6 +682,10 @@ $courses = pg_query($conn, $courses_query);
 
 <body>
     <div class="menu-bar">
+        <div class="logo">
+            <img src="assets/logo.png" alt="LMS Logo">
+            <span>LMS</span>
+        </div>
         <a href="main.php"><i class="fa fa-home"></i> Home</a>
         <a href="my_courses.php"><i class="fa fa-book"></i> My Courses</a>
         <a href="quizzes.php"><i class="fa fa-question-circle"></i> Quizzes</a>
@@ -809,7 +831,8 @@ $courses = pg_query($conn, $courses_query);
                                         <i class="fa fa-eye"></i> View
                                     </button>
                                     <?php if ($role === 'student' && $submission['grade'] === null): ?>
-                                        <a href="edit_submission.php?id=<?php echo $submission['id']; ?>" class="btn-gradient" style="text-decoration: none; margin-left: 0.5rem;">
+                                        <a href="edit_submission.php?id=<?php echo $submission['id']; ?>" class="btn-gradient"
+                                            style="text-decoration: none; margin-left: 0.5rem;">
                                             <i class="fa fa-edit"></i> Edit
                                         </a>
                                     <?php endif; ?>

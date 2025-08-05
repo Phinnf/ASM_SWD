@@ -57,7 +57,7 @@ if ($is_graded) {
 $edit_msg = '';
 if (isset($_POST['update_submission'])) {
     $submission_text = pg_escape_string($conn, trim($_POST['submission_text']));
-    
+
     // Handle file uploads
     $uploaded_files = [];
     if (isset($_FILES['submission_files']) && !empty($_FILES['submission_files']['name'][0])) {
@@ -108,7 +108,7 @@ if (isset($_POST['update_submission'])) {
             $final_submission_text .= "\n\n--- UPLOADED FILES ---\n";
             foreach ($uploaded_files as $file_info) {
                 list($original_name, $stored_name) = explode('|', $file_info);
-                $final_submission_text .= "File: $original_name\n";
+                $final_submission_text .= "File: $original_name|$stored_name\n";
             }
         }
 
@@ -139,7 +139,14 @@ if (count($text_parts) > 1) {
     $files = explode("\n", trim($files_section));
     foreach ($files as $file_line) {
         if (strpos($file_line, 'File:') === 0) {
-            $current_files[] = trim(substr($file_line, 5));
+            $file_info = trim(substr($file_line, 5));
+            // Handle both old format (just filename) and new format (filename|stored_name)
+            if (strpos($file_info, '|') !== false) {
+                list($original_name, $stored_name) = explode('|', $file_info, 2);
+                $current_files[] = $original_name;
+            } else {
+                $current_files[] = $file_info;
+            }
         }
     }
 }
@@ -470,7 +477,8 @@ if (count($text_parts) > 1) {
                 <div class="info-card">
                     <div class="info-label">Course</div>
                     <div class="info-value"><?php echo htmlspecialchars($submission['course_code']); ?> -
-                        <?php echo htmlspecialchars($submission['course_title']); ?></div>
+                        <?php echo htmlspecialchars($submission['course_title']); ?>
+                    </div>
                 </div>
                 <div class="info-card">
                     <div class="info-label">Due Date</div>
@@ -493,7 +501,8 @@ if (count($text_parts) > 1) {
             <form method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Your Submission (Text)</label>
-                    <textarea name="submission_text" placeholder="Enter your assignment submission here..." required><?php echo htmlspecialchars($current_text); ?></textarea>
+                    <textarea name="submission_text" placeholder="Enter your assignment submission here..."
+                        required><?php echo htmlspecialchars($current_text); ?></textarea>
                 </div>
 
                 <?php if (!empty($current_files)): ?>
@@ -627,4 +636,4 @@ if (count($text_parts) > 1) {
     </script>
 </body>
 
-</html> 
+</html>

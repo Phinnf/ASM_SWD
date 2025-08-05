@@ -91,6 +91,16 @@ $submissions = pg_query($conn, $submissions_query);
             height: 60px;
         }
 
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 40px;
+            margin-right: 20px;
+        }
+
         .menu-bar a {
             color: white;
             padding: 0 18px;
@@ -311,6 +321,9 @@ $submissions = pg_query($conn, $submissions_query);
 
 <body>
     <div class="menu-bar">
+        <div class="logo">
+            <img src="assets/logo.png" alt="Logo" style="height: 40px; margin-right: 20px;">
+        </div>
         <a href="main.php"><i class="fa fa-home"></i> Home</a>
         <a href="my_courses.php"><i class="fa fa-book"></i> My Courses</a>
         <a href="quizzes.php"><i class="fa fa-question-circle"></i> Quizzes</a>
@@ -377,6 +390,48 @@ $submissions = pg_query($conn, $submissions_query);
                                         <?php echo htmlspecialchars(substr($submission['submission_text'], 0, 100)); ?>
                                         <?php if (strlen($submission['submission_text']) > 100): ?>...<?php endif; ?>
                                     </div>
+                                    
+                                    <?php if ($role === 'instructor'): ?>
+                                        <?php
+                                        // Check for uploaded files in submission text
+                                        $text_parts = explode('--- UPLOADED FILES ---', $submission['submission_text']);
+                                        if (count($text_parts) > 1) {
+                                            $files_section = $text_parts[1];
+                                            $files = explode("\n", trim($files_section));
+                                            $uploaded_files = [];
+                                            
+                                            foreach ($files as $file_line) {
+                                                if (strpos($file_line, 'File:') === 0) {
+                                                    $file_info = trim(substr($file_line, 5));
+                                                    if (strpos($file_info, '|') !== false) {
+                                                        list($file_name, $stored_filename) = explode('|', $file_info, 2);
+                                                        if ($stored_filename) {
+                                                            $uploaded_files[] = [
+                                                                'name' => $file_name,
+                                                                'stored' => $stored_filename
+                                                            ];
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            if (!empty($uploaded_files)): ?>
+                                                <div style="margin-top: 0.5rem;">
+                                                    <small style="color: #666; display: block; margin-bottom: 0.3rem;">
+                                                        <i class="fa fa-paperclip"></i> Uploaded Files:
+                                                    </small>
+                                                    <?php foreach ($uploaded_files as $file): ?>
+                                                        <a href="download_submission.php?file=<?php echo urlencode($file['stored']); ?>&submission_id=<?php echo $submission['id']; ?>"
+                                                           class="btn-secondary"
+                                                           style="text-decoration: none; padding: 0.2rem 0.5rem; font-size: 0.75rem; margin-right: 0.3rem; margin-bottom: 0.2rem; display: inline-block;">
+                                                            <i class="fa fa-download"></i> <?php echo htmlspecialchars(substr($file['name'], 0, 20)); ?>
+                                                            <?php if (strlen($file['name']) > 20): ?>...<?php endif; ?>
+                                                        </a>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php } ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if ($submission['grade'] !== null): ?>

@@ -73,6 +73,24 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
             width: 320px;
         }
 
+        .logo {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .logo img {
+            height: 60px;
+            width: auto;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo h1 {
+            margin: 0;
+            color: #00b09b;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
         h2 {
             text-align: center;
             margin-bottom: 1rem;
@@ -135,7 +153,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
 
 <body>
     <div class="login-container">
-        <h2>Cesus - User Login</h2>
+        <div class="logo">
+            <img src="assets/logo.png" alt="Cesus Logo">
+        </div>
+        <h2>User Login</h2>
         <form method="post" action="login.php" id="login-form">
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" required />

@@ -21,7 +21,7 @@ if (!$submission_id) {
 
 // Get submission details
 $submission_query = "SELECT s.*, a.title as assignment_title, a.description as assignment_description, 
-                           a.max_points, a.due_date, c.title as course_title, c.course_code,
+                           a.max_points, a.due_date, c.title as course_title, c.course_code, c.id as course_id,
                            u.username as student_name, u.email as student_email
                     FROM submissions s 
                     JOIN assessments a ON s.assessment_id = a.id 
@@ -98,6 +98,24 @@ if (isset($_POST['grade_submission']) && $role === 'instructor') {
             display: flex;
             align-items: center;
             height: 60px;
+        }
+
+        .menu-bar .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-right: 2rem;
+        }
+
+        .menu-bar .logo img {
+            height: 35px;
+            width: auto;
+        }
+
+        .menu-bar .logo span {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
         }
 
         .menu-bar a {
@@ -370,6 +388,10 @@ if (isset($_POST['grade_submission']) && $role === 'instructor') {
 
 <body>
     <div class="menu-bar">
+        <div class="logo">
+            <img src="assets/logo.png" alt="LMS Logo">
+            <span>LMS</span>
+        </div>
         <a href="main.php"><i class="fa fa-home"></i> Home</a>
         <a href="my_courses.php"><i class="fa fa-book"></i> My Courses</a>
         <a href="quizzes.php"><i class="fa fa-question-circle"></i> Quizzes</a>
@@ -495,18 +517,38 @@ if (isset($_POST['grade_submission']) && $role === 'instructor') {
                             <h4 style="color: #00b09b; margin-bottom: 1rem;">
                                 <i class="fa fa-paperclip"></i> Uploaded Files
                             </h4>
+
                             <?php
                             $files_section = $text_parts[1];
                             $files = explode("\n", trim($files_section));
+
+
+
                             foreach ($files as $file_line):
                                 if (strpos($file_line, 'File:') === 0):
-                                    $file_name = trim(substr($file_line, 5));
+                                    $file_info = trim(substr($file_line, 5));
+                                    // Check if file info contains the pipe separator (original_name|stored_name)
+                                    if (strpos($file_info, '|') !== false) {
+                                        list($file_name, $stored_filename) = explode('|', $file_info, 2);
+                                    } else {
+                                        $file_name = $file_info;
+                                        $stored_filename = '';
+                                    }
                                     ?>
                                     <div
-                                        style="display: flex; align-items: center; padding: 0.5rem; background: #f8f9fa; border-radius: 6px; margin-bottom: 0.5rem;">
+                                        style="display: flex; align-items: center; padding: 0.8rem; background: #f8f9fa; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid #e0e0e0;">
                                         <i class="fa fa-file" style="color: #00b09b; margin-right: 0.5rem;"></i>
                                         <span style="flex-grow: 1;"><?php echo htmlspecialchars($file_name); ?></span>
-                                        <span style="color: #666; font-size: 0.9rem;">Uploaded</span>
+                                        <span style="color: #666; font-size: 0.9rem; margin-right: 1rem;">Uploaded</span>
+                                        <?php if ($role === 'instructor'): ?>
+                                            <?php if ($stored_filename): ?>
+                                                <a href="download_submission.php?file=<?php echo urlencode($stored_filename); ?>&submission_id=<?php echo $submission_id; ?>"
+                                                    class="btn-gradient"
+                                                    style="text-decoration: none; padding: 0.3rem 0.8rem; font-size: 0.8rem;">
+                                                    <i class="fa fa-download"></i> Download
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
                                     </div>
                                     <?php
                                 endif;

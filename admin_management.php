@@ -94,8 +94,16 @@ $activities_result = pg_query($conn, $activities_query);
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             font-size: 1.8rem;
             font-weight: 700;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
         }
 
         .nav-menu {
@@ -341,7 +349,10 @@ $activities_result = pg_query($conn, $activities_query);
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <div class="logo">Cesus Admin</div>
+            <div class="logo">
+                <img src="assets/logo.png" alt="Cesus Logo">
+                Cesus Admin
+            </div>
             <nav class="nav-menu">
                 <a href="admin_dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="admin_management.php"><i class="fas fa-cogs"></i> Management</a>
@@ -465,7 +476,8 @@ $activities_result = pg_query($conn, $activities_query);
                         <h4><?php echo htmlspecialchars($activity['username']); ?>
                             (<?php echo ucfirst($activity['role']); ?>)</h4>
                         <p><?php echo $activity['activity']; ?> -
-                            <?php echo date('M j, Y g:i A', strtotime($activity['created_at'])); ?></p>
+                            <?php echo date('M j, Y g:i A', strtotime($activity['created_at'])); ?>
+                        </p>
                     </div>
                 </div>
             <?php endwhile; ?>

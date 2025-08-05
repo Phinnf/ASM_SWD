@@ -10,14 +10,14 @@ $role = $_SESSION['role'];
 
 // Redirect users to their appropriate dashboards
 if ($role === 'admin') {
-    header('Location: admin_dashboard.php');
-    exit;
+  header('Location: admin_dashboard.php');
+  exit;
 } elseif ($role === 'instructor') {
-    header('Location: instructor_dashboard.php');
-    exit;
+  header('Location: instructor_dashboard.php');
+  exit;
 } elseif ($role === 'student') {
-    header('Location: student_dashboard.php');
-    exit;
+  header('Location: student_dashboard.php');
+  exit;
 }
 ?>
 
@@ -44,6 +44,24 @@ if ($role === 'admin') {
       display: flex;
       align-items: center;
       height: 60px;
+    }
+
+    .menu-bar .logo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-right: 2rem;
+    }
+
+    .menu-bar .logo img {
+      height: 35px;
+      width: auto;
+    }
+
+    .menu-bar .logo span {
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 700;
     }
 
     .menu-bar a,
@@ -162,7 +180,6 @@ if ($role === 'admin') {
       align-items: center;
       justify-content: flex-start;
     }
-
     .card:hover {
       transform: translateY(-6px) scale(1.03);
       box-shadow: 0 8px 32px rgba(0, 176, 155, 0.13);
@@ -238,6 +255,10 @@ if ($role === 'admin') {
 
 <body>
   <div class="menu-bar">
+    <div class="logo">
+      <img src="assets/logo.png" alt="Cesus Logo">
+      <span>Cesus</span>
+    </div>
     <a href="main.php"><i class="fa fa-home"></i> Home</a>
     <div class="dropdown">
       <button class="dropbtn"><i class="fa fa-book"></i> Courses</button>
@@ -266,26 +287,26 @@ if ($role === 'admin') {
   <div class="dashboard">
     <!-- Role-specific Dashboard Access -->
     <?php if ($role === 'admin'): ?>
-    <a class="card" href="admin_dashboard.php">
-      <div class="role-badge">Admin</div>
-      <span class="icon"><i class="fa fa-user-shield"></i></span>
-      <div class="card-title">Admin Dashboard</div>
-      <div class="card-desc">Manage users, courses, and system settings.</div>
-    </a>
+      <a class="card" href="admin_dashboard.php">
+        <div class="role-badge">Admin</div>
+        <span class="icon"><i class="fa fa-user-shield"></i></span>
+        <div class="card-title">Admin Dashboard</div>
+        <div class="card-desc">Manage users, courses, and system settings.</div>
+      </a>
     <?php elseif ($role === 'instructor'): ?>
-    <a class="card" href="instructor_dashboard.php">
-      <div class="role-badge">Instructor</div>
-      <span class="icon"><i class="fa fa-chalkboard-teacher"></i></span>
-      <div class="card-title">Instructor Dashboard</div>
-      <div class="card-desc">Manage your courses and track student progress.</div>
-    </a>
+      <a class="card" href="instructor_dashboard.php">
+        <div class="role-badge">Instructor</div>
+        <span class="icon"><i class="fa fa-chalkboard-teacher"></i></span>
+        <div class="card-title">Instructor Dashboard</div>
+        <div class="card-desc">Manage your courses and track student progress.</div>
+      </a>
     <?php elseif ($role === 'student'): ?>
-    <a class="card" href="student_dashboard.php">
-      <div class="role-badge">Student</div>
-      <span class="icon"><i class="fa fa-user-graduate"></i></span>
-      <div class="card-title">Student Dashboard</div>
-      <div class="card-desc">View your courses, assignments, and progress.</div>
-    </a>
+      <a class="card" href="student_dashboard.php">
+        <div class="role-badge">Student</div>
+        <span class="icon"><i class="fa fa-user-graduate"></i></span>
+        <div class="card-title">Student Dashboard</div>
+        <div class="card-desc">View your courses, assignments, and progress.</div>
+      </a>
     <?php endif; ?>
 
     <!-- Pomodoro Timer Card -->
@@ -422,3 +443,4 @@ if ($role === 'admin') {
 </body>
 
 </html>
+

@@ -99,9 +99,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       margin-bottom: 2rem;
     }
 
+    .logo img {
+      height: 60px;
+      width: auto;
+      margin-bottom: 0.5rem;
+    }
+
     .logo h1 {
+      margin: 0;
       color: #00b09b;
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 700;
     }
 
@@ -279,7 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
   <div class="register-container">
     <div class="logo">
-      <h1>Cesus</h1>
+      <img src="assets/logo.png" alt="Cesus Logo">
     </div>
     <h2>Create Your Account</h2>
 

@@ -94,8 +94,16 @@ $quiz_results_result = pg_query($conn, $quiz_results_query);
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             font-size: 1.8rem;
             font-weight: 700;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
         }
 
         .nav-menu {
@@ -357,7 +365,10 @@ $quiz_results_result = pg_query($conn, $quiz_results_query);
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <div class="logo">Cesus Classroom</div>
+            <div class="logo">
+                <img src="assets/logo.png" alt="Cesus Logo">
+                Cesus Classroom
+            </div>
             <nav class="nav-menu">
                 <a href="assignments.php"><i class="fas fa-tasks"></i> Assignments</a>
                 <a href="quizzes.php"><i class="fas fa-question-circle"></i> Quizzes</a>
@@ -373,7 +384,57 @@ $quiz_results_result = pg_query($conn, $quiz_results_query);
         <!-- Welcome Section -->
         <div class="welcome-section">
             <h1 class="welcome-title">Welcome back, <?php echo htmlspecialchars($username); ?>!</h1>
-            <p class="welcome-subtitle">Here's what's happening in your courses today.</p>
+            <p class="welcome-subtitle">Your journey to academic excellence starts here with Cesus LMS.</p>
+
+            <!-- System Information -->
+            <div
+                style="margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px;">
+                <h3 style="color: #00b09b; margin-bottom: 1rem; font-size: 1.3rem;">
+                    <i class="fas fa-graduation-cap"></i> Cesus Learning Management System
+                </h3>
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div style="background: white; padding: 1rem; border-radius: 6px; border-left: 4px solid #00b09b;">
+                        <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 1rem;">
+                            <i class="fas fa-book-open"></i> Interactive Learning
+                        </h4>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                            Access course materials, submit assignments, and take quizzes in an intuitive digital
+                            environment.
+                        </p>
+                    </div>
+                    <div style="background: white; padding: 1rem; border-radius: 6px; border-left: 4px solid #96c93d;">
+                        <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 1rem;">
+                            <i class="fas fa-edit"></i> Flexible Submissions
+                        </h4>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                            Edit your assignments before grading and submit multiple file formats for better learning
+                            outcomes.
+                        </p>
+                    </div>
+                    <div style="background: white; padding: 1rem; border-radius: 6px; border-left: 4px solid #ffc107;">
+                        <h4 style="color: #333; margin-bottom: 0.5rem; font-size: 1rem;">
+                            <i class="fas fa-chart-line"></i> Progress Tracking
+                        </h4>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                            Monitor your academic progress with real-time feedback and detailed performance analytics.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Learning Tips for Students -->
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
+                    <h4 style="color: #00b09b; margin-bottom: 1rem; font-size: 1.1rem;">
+                        <i class="fas fa-lightbulb"></i> Study Success Tips
+                    </h4>
+                    <ul style="color: #666; line-height: 1.6; margin: 0; padding-left: 1.5rem;">
+                        <li>Check your <strong>Upcoming Assignments</strong> regularly to stay on top of deadlines</li>
+                        <li>Use the <strong>Edit Submission</strong> feature to improve your work before grading</li>
+                        <li>Review your quiz results to identify areas for improvement</li>
+                        <li>Communicate with instructors through the messaging system for clarification</li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
         <!-- Content Grid -->
@@ -505,6 +566,40 @@ $quiz_results_result = pg_query($conn, $quiz_results_query);
                                 </li>
                             <?php endwhile; ?>
                         </ul>
+                    </div>
+                </div>
+
+                <!-- Student Features -->
+                <div class="sidebar-card">
+                    <div class="section-header">
+                        <h3 class="section-title">Student Features</h3>
+                    </div>
+                    <div class="sidebar-content">
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                            <h4 style="color: #00b09b; font-size: 1rem; margin-bottom: 0.5rem;">
+                                <i class="fas fa-edit"></i> Edit Submissions
+                            </h4>
+                            <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                                Modify your assignments before they're graded to improve your work quality.
+                            </p>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                            <h4 style="color: #00b09b; font-size: 1rem; margin-bottom: 0.5rem;">
+                                <i class="fas fa-file-upload"></i> File Uploads
+                            </h4>
+                            <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                                Submit multiple file formats including PDF, DOC, ZIP, and more for comprehensive
+                                assignments.
+                            </p>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+                            <h4 style="color: #00b09b; font-size: 1rem; margin-bottom: 0.5rem;">
+                                <i class="fas fa-comments"></i> Direct Communication
+                            </h4>
+                            <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                                Message instructors directly for questions, clarifications, and academic support.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -59,10 +59,18 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             font-size: 2rem;
             font-weight: 700;
             color: white;
             text-decoration: none;
+        }
+
+        .logo img {
+            height: 45px;
+            width: auto;
         }
 
         .nav-links {
@@ -341,7 +349,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <!-- Header -->
     <header class="header">
         <nav class="nav-container">
-            <a href="#" class="logo">Cesus</a>
+            <a href="#" class="logo">
+                <img src="assets/logo.png" alt="Cesus Logo">
+                Cesus
+            </a>
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#why-choose-us">Why Choose Us</a>

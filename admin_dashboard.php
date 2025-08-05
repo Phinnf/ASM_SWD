@@ -111,8 +111,16 @@ $users_result = pg_query($conn, $users_query);
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             font-size: 1.8rem;
             font-weight: 700;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
         }
 
         .user-menu {
@@ -357,7 +365,10 @@ $users_result = pg_query($conn, $users_query);
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <div class="logo">Cesus Admin</div>
+            <div class="logo">
+                <img src="assets/logo.png" alt="Cesus Logo">
+                <span>Cesus Admin</span>
+            </div>
             <div class="user-menu">
                 <span>Welcome, <?php echo htmlspecialchars($username); ?></span>
                 <a href="admin_management.php"><i class="fas fa-cogs"></i> Management</a>
